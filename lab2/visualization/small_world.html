@@ -1,0 +1,321 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 800px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": 0, "label": "0 V: 100.00", "shape": "dot"}, {"color": "#97c2fc", "id": 1, "label": "1 V: 76.99", "shape": "dot"}, {"color": "#97c2fc", "id": 2, "label": "2 V: 70.05", "shape": "dot"}, {"color": "#97c2fc", "id": 18, "label": "18 V: 86.72", "shape": "dot"}, {"color": "#97c2fc", "id": 3, "label": "3 V: 55.62", "shape": "dot"}, {"color": "#97c2fc", "id": 10, "label": "10 V: 47.30", "shape": "dot"}, {"color": "#97c2fc", "id": 8, "label": "8 V: 52.93", "shape": "dot"}, {"color": "#97c2fc", "id": 11, "label": "11 V: 54.68", "shape": "dot"}, {"color": "#97c2fc", "id": 13, "label": "13 V: 30.62", "shape": "dot"}, {"color": "#97c2fc", "id": 17, "label": "17 V: 54.79", "shape": "dot"}, {"color": "#97c2fc", "id": 9, "label": "9 V: 47.07", "shape": "dot"}, {"color": "#97c2fc", "id": 4, "label": "4 V: 45.44", "shape": "dot"}, {"color": "#97c2fc", "id": 5, "label": "5 V: 40.95", "shape": "dot"}, {"color": "#97c2fc", "id": 6, "label": "6 V: 47.68", "shape": "dot"}, {"color": "#97c2fc", "id": 7, "label": "7 V: 47.34", "shape": "dot"}, {"color": "#97c2fc", "id": 19, "label": "19 V: 37.63", "shape": "dot"}, {"color": "#97c2fc", "id": 16, "label": "16 V: 48.55", "shape": "dot"}, {"color": "#97c2fc", "id": 12, "label": "12 V: 43.42", "shape": "dot"}, {"color": "#97c2fc", "id": 15, "label": "15 V: 0.00", "shape": "dot"}, {"color": "#97c2fc", "id": 14, "label": "14 V: 30.35", "shape": "dot"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "rgb(117, 137, 0)", "from": 0, "label": "I: 4.60A, R: 5.00 ", "to": 1, "width": 5}, {"arrows": "to", "color": "rgb(254, 0, 0)", "from": 0, "label": "I: 9.98A, R: 3.00 ", "to": 2, "width": 5}, {"arrows": "to", "color": "rgb(338, -83, 0)", "from": 0, "label": "I: 13.28A, R: 1.00 ", "to": 18, "width": 5}, {"arrows": "to", "color": "rgb(35, 219, 0)", "from": 1, "label": "I: 1.39A, R: 5.00 ", "to": 2, "width": 5}, {"arrows": "to", "color": "rgb(77, 177, 0)", "from": 1, "label": "I: 3.05A, R: 7.00 ", "to": 3, "width": 5}, {"arrows": "to", "color": "rgb(252, 2, 0)", "from": 1, "label": "I: 9.90A, R: 3.00 ", "to": 10, "width": 5}, {"arrows": "from", "color": "rgb(248, 6, 0)", "from": 1, "label": "I: 9.73A, R: 1.00 ", "to": 18, "width": 5}, {"arrows": "to", "color": "rgb(73, 181, 0)", "from": 2, "label": "I: 2.89A, R: 5.00 ", "to": 3, "width": 5}, {"arrows": "to", "color": "rgb(48, 206, 0)", "from": 2, "label": "I: 1.90A, R: 9.00 ", "to": 8, "width": 5}, {"arrows": "to", "color": "rgb(56, 198, 0)", "from": 2, "label": "I: 2.20A, R: 7.00 ", "to": 11, "width": 5}, {"arrows": "to", "color": "rgb(111, 143, 0)", "from": 2, "label": "I: 4.38A, R: 9.00 ", "to": 13, "width": 5}, {"arrows": "to", "color": "rgb(90, 164, 0)", "from": 18, "label": "I: 3.55A, R: 9.00 ", "to": 17, "width": 5}, {"arrows": "to", "color": "rgb(21, 233, 0)", "from": 3, "label": "I: 0.83A, R: 1.00 ", "to": 17, "width": 5}, {"arrows": "to", "color": "rgb(106, 148, 0)", "from": 3, "label": "I: 4.16A, R: 2.00 ", "to": 10, "width": 5}, {"arrows": "to", "color": "rgb(24, 230, 0)", "from": 3, "label": "I: 0.95A, R: 9.00 ", "to": 9, "width": 5}, {"arrows": "to", "color": "rgb(49, 205, 0)", "from": 10, "label": "I: 1.94A, R: 2.00 ", "to": 12, "width": 5}, {"arrows": "to", "color": "rgb(201, 53, 0)", "from": 10, "label": "I: 7.88A, R: 6.00 ", "to": 15, "width": 5}, {"arrows": "to", "color": "rgb(108, 146, 0)", "from": 10, "label": "I: 4.24A, R: 4.00 ", "to": 14, "width": 5}, {"arrows": "to", "color": "rgb(48, 206, 0)", "from": 8, "label": "I: 1.90A, R: 5.00 ", "to": 12, "width": 5}, {"arrows": "to", "color": "rgb(25, 229, 0)", "from": 11, "label": "I: 1.00A, R: 7.00 ", "to": 6, "width": 5}, {"arrows": "to", "color": "rgb(31, 223, 0)", "from": 11, "label": "I: 1.25A, R: 9.00 ", "to": 12, "width": 5}, {"arrows": "from", "color": "rgb(1, 253, 0)", "from": 11, "label": "I: 0.05A, R: 2.00 ", "to": 17, "width": 5}, {"arrows": "from", "color": "rgb(46, 208, 0)", "from": 13, "label": "I: 1.83A, R: 7.00 ", "to": 12, "width": 5}, {"arrows": "to", "color": "rgb(2, 252, 0)", "from": 13, "label": "I: 0.09A, R: 3.00 ", "to": 14, "width": 5}, {"arrows": "to", "color": "rgb(156, 98, 0)", "from": 13, "label": "I: 6.12A, R: 5.00 ", "to": 15, "width": 5}, {"arrows": "to", "color": "rgb(22, 232, 0)", "from": 17, "label": "I: 0.89A, R: 7.00 ", "to": 16, "width": 5}, {"arrows": "to", "color": "rgb(87, 167, 0)", "from": 17, "label": "I: 3.43A, R: 5.00 ", "to": 19, "width": 5}, {"arrows": "from", "color": "rgb(1, 253, 0)", "from": 9, "label": "I: 0.04A, R: 6.00 ", "to": 7, "width": 5}, {"arrows": "from", "color": "rgb(4, 250, 0)", "from": 9, "label": "I: 0.19A, R: 8.00 ", "to": 16, "width": 5}, {"arrows": "to", "color": "rgb(30, 224, 0)", "from": 9, "label": "I: 1.18A, R: 8.00 ", "to": 19, "width": 5}, {"arrows": "to", "color": "rgb(19, 235, 0)", "from": 4, "label": "I: 0.75A, R: 6.00 ", "to": 5, "width": 5}, {"arrows": "from", "color": "rgb(19, 235, 0)", "from": 4, "label": "I: 0.75A, R: 3.00 ", "to": 6, "width": 5}, {"arrows": "from", "color": "rgb(23, 231, 0)", "from": 5, "label": "I: 0.91A, R: 7.00 ", "to": 7, "width": 5}, {"arrows": "to", "color": "rgb(42, 212, 0)", "from": 5, "label": "I: 1.66A, R: 2.00 ", "to": 19, "width": 5}, {"arrows": "to", "color": "rgb(8, 246, 0)", "from": 6, "label": "I: 0.35A, R: 1.00 ", "to": 7, "width": 5}, {"arrows": "from", "color": "rgb(2, 252, 0)", "from": 6, "label": "I: 0.10A, R: 9.00 ", "to": 16, "width": 5}, {"arrows": "from", "color": "rgb(15, 239, 0)", "from": 7, "label": "I: 0.61A, R: 2.00 ", "to": 16, "width": 5}, {"arrows": "to", "color": "rgb(159, 95, 0)", "from": 19, "label": "I: 6.27A, R: 6.00 ", "to": 15, "width": 5}, {"arrows": "to", "color": "rgb(83, 171, 0)", "from": 12, "label": "I: 3.27A, R: 4.00 ", "to": 14, "width": 5}, {"arrows": "from", "color": "rgb(193, 61, 0)", "from": 15, "label": "I: 7.59A, R: 4.00 ", "to": 14, "width": 5}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"physics": {"barnesHut": {"gravitationalConstant": -8000, "centralGravity": 0.3, "springLength": 400, "springConstant": 0.04, "damping": 0.09}, "minVelocity": 0.75}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

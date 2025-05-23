@@ -143,32 +143,36 @@ def search(query: str, k: int = K_DEFAULT, return_results: bool = False):
         results_list = []
         for doc_idx in top_k_indices:
             doc_idx = int(doc_idx)
+            # Sprawdzenie, czy indeks dokumentu jest w poprawnym zakresie
             if 0 <= doc_idx < len(metadata):
                 doc_meta = metadata[doc_idx]
                 score_val = scores[doc_idx]
+                # Dodanie wyników do listy wyników
                 results_list.append({
                     'title': doc_meta.get('title', f'Document {doc_idx + 1}'),
                     'url': doc_meta.get('url', '#'),
                     'score': float(score_val)
                 })
         return results_list
-    else:  # consola debuging
-        print(f"\n🔍 Top {actual_k} TF-IDF results for query: \"{query}\"")
-        if not top_k_indices.size: print("No results found.")
+    else:  # Debugowanie w konsoli
+        print(f"\n🔍 Top {actual_k} wyniki TF-IDF dla zapytania: \"{query}\"")
+        if not top_k_indices.size:
+            print("Nie znaleziono wyników.")
         for i, doc_idx in enumerate(top_k_indices, start=1):
             doc_idx = int(doc_idx)
+            # Sprawdzenie, czy indeks dokumentu jest w poprawnym zakresie
             if 0 <= doc_idx < len(metadata):
                 doc_meta = metadata[doc_idx]
                 print(
-                    f"[{i}] {doc_meta.get('title', 'N/A')} (Score: {scores[doc_idx]:.4f}, URL: {doc_meta.get('url', '#')})")
+                    f"[{i}] {doc_meta.get('title', 'N/A')} (Wynik: {scores[doc_idx]:.4f}, URL: {doc_meta.get('url', '#')})")
         return None
 
-# test w konsoli
+# Testowanie w konsoli
 if __name__ == "__main__":
     if DATA_LOADED_SUCCESSFULLY_TFIDF:
-        print("\nTesting TF-IDF module from command line...")
+        print("\nTestowanie modułu TF-IDF z linii komend...")
         test_query = "Donald Trump"
-        print(f"Searching for: '{test_query}'")
+        print(f"Wyszukiwanie dla: '{test_query}'")
         search(test_query, k=3)
         results_api = search(test_query, k=2, return_results=True)
-        print(f"\nAPI results for '{test_query}': {results_api}")
+        print(f"\nWyniki API dla '{test_query}': {results_api}")

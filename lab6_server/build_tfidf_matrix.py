@@ -8,10 +8,6 @@ INPUT_FILE_FREQ = "doc_freq.json"
 INPUT_FILE_VOCAB = "vocabulary.json"
 OUTPUT_FILE = "tfidf_matrix.npz"
 
-# INPUT_FILE_COUNT = "doc_term_counts_2.json"
-# INPUT_FILE_FREQ = "doc_freq_2.json"
-# INPUT_FILE_VOCAB = "vocabulary_2.json"
-# OUTPUT_FILE = "tfidf_matrix_2.npz"
 
 # Wczytanie danych
 with open(f"{INPUT_FILE_COUNT}", encoding="utf-8") as f:

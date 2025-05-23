@@ -14,9 +14,6 @@ INPUT_DIR = "crawled_docs_async"
 OUTPUT_FILE_COUNT = "doc_term_counts.json"
 OUTPUT_FILE_FREQ = "doc_freq.json"
 
-# INPUT_DIR = "crawled_docs_async_2"
-# OUTPUT_FILE_COUNT = "doc_term_counts_2.json"
-# OUTPUT_FILE_FREQ = "doc_freq_2.json"
 
 stop_words = set(stopwords.words('english'))
 punctuation = set(string.punctuation)
